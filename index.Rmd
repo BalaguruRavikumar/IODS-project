@@ -1,5 +1,6 @@
 ---
 title: "IODS course project"
+author: "Balaguru Ravikumar"
 output:
   html_document:
     theme: cosmo

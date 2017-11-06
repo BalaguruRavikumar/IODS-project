@@ -1,0 +1,12 @@
+---
+title: "README"
+author: "Balaguru Ravikumar"
+date: "11/6/2017"
+output: html_document
+---
+
+## About the course:
+The **Introduction to Open Data Science** is an excellent initative for graduate students like myself to explore the base aspects of reporducible research. The course through various workshop excercises faciliaties *hands-on* data anaylsis frameworks to explore and review. Further the peer-review process accompanied with every excercise would aid in understanding the excercise in a grave manner.
+
+##Link to course dairy:
+The link to my course dairy is given [here](https://balagururavikumar.github.io/IODS-project/).

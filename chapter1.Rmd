@@ -1,4 +1,5 @@
 
 # About the project
 
-*Write a short description about the course and add a link to your github repository here. This is an R markdown (.Rmd) file so you can use R markdown syntax. See the 'Useful links' page in the mooc area (chapter 1) for instructions.*
+The **Introduction to Open Data Science** is an excellent initative for graduate students like myself to explore the base aspects of reporducible research. The course through various workshop excercises faciliaties *hands-on* data anaylsis frameworks to explore and review. Further the peer-review process accompanied with every excercise would aid in understanding the excercise in a grave manner. My excercises and codes will be available for my peers from my [Git repository](https://github.com/BalaguruRavikumar/IODS-project.git).
+
