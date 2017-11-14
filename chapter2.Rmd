@@ -1,7 +1,75 @@
-# Insert chapter 2 title here
+# **Regression and Model validation**
 
-*Describe the work you have done this week and summarize your learning.*
+##Summary
+* Prior to starting the **"_RStudio Exercise 2_"** I have completed the DataCamp excerise **"Regression and model validation"**, wherein functionalities such as handling dataframes (reading, writing, selecting and plotting) were well understood. Apart from exploring, fitting and predicting using linear regression models, I have also familiarized with apporaches to model validation.
+* The analysis dataset for the **"_RStudio Exercise 2_"** was generated following the **Data Wrangling** protocol where in a dataframe *learning2014* data was processed such that it contains 166 rows and 7 columns. 
 
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using  
+##Procedure for Exercise 2
+###Reading the data:
+```{r}
+lrn2014 <- read.table('data/learning2014.txt', header=TRUE)
+head(lrn2014, n = 10)
+```
+####Exploring the data:
+* This initial dataset documents the responses from 183 students complied as a part of a survey on teaching and learning that was conducted as a research project made possible by the **Academy of Sciences**. Certain missing values of some backgrounds were imputed.  
+* The initial dataset was curated such that it contains `r dim(lrn2014)[1]` respondents and `r dim(lrn2014)[2]` factors. Factors/Parameters such as **age, gender, attitutde, deep questions, durface questions, strategic questions and the exam points secured by the students**  are given as column names.
+* Further curation was carried such that only the avergae values from questionaries *deep questions, durface questions, strategic questions* were used and only responder with exam points *greater than zero* are used, resulting 166 respondents over 7 factors.
+* A brief overview of the analysis data is given below.
+
+```{r}
+str(lrn2014)
+colnames(lrn2014)
+```
+
+###Graphical overview and summary of the data:
+```{r echo=FALSE}
+library(GGally)
+library(ggplot2)
+p <- ggpairs(lrn2014, mapping = aes(col = gender, alpha  = 0.3), lower = list(combo = wrap("facethist", bins = 20)))
+p
+
+summary(lrn2014)
+
+```
+From the above graphical plot and the summary of the dataset, it is possible to acertain the following:    
+1. The number of female respondents were high than the number of male respondents.  
+2. All the paramaeters are distributed close to a normal distrbution.  
+3. The average age and exams points of the respondents is 25 and 22 respectively.  
+4. Their global attitude towards statistics is ~31.  
+5. With respect to statergic question alone, some responders were able to secure a full mark of 5.  
+6. There exist a positive correlation between the exam points secured and a responders attitude towards statistics.  
+7. There are no as such strong negative correlations of various paramaters and the exam points secured.  
+
+### Fitting a linear regression model:
+```{r}
+my_model1 <- lm(points ~ attitude + deep + age, data = lrn2014)
+summary(my_model1)
+
+my_model2 <- lm(points ~ attitude + stra + surf, data = lrn2014)
+summary(my_model2)
+```
+The dependent/target variable used in the above model are the exam points obtained by the students, the independent/explanatory variable are various parameters such as attitute, age, and marks of questionaries from deep, statergic and surface questions. The objective is to use these explanatory variables to explain the distribution of exam points. The model being a multiple-linear model there are co-efficients (alpha) for the intercept and the various explanatory variables (Beta1, Beta2 and Beta3). The significance of these co-efficients are highlithed by the associated P-values and t values. There are various levels of significance (90%, 95% and 99%) indicated as *\** signs. These P-values are generated from a null distribution which gives us the risk of obatining such estimates for the co-efficients by chance. Apart from attitude all the other explanatory variables were found to be insignificant, as shown in the summary of generated models **my_models 1 & 2**.  
+
+###Parameter relationships:
+From the summary of the models it can be concluded that **attitude** is the only explanatory variable that explains the variance in the target variable **points** with certain degree of significance and with a lower standard error. All the other parameters in the model that show close to zero correlation with the depenedent variable lacked any significance in explaining the **points** variable. Intercept is a constant addition for the target variable estimate when explaining it using the above mentioned independent variables. Based on this model for every 0.34 increase in attitude varibale one can expect **11 (intercept) + 1 = 12** increase to the **points** variable.
+
+The **Multiple R-squared** value of the models were close to 0.205. Thus the currently implemented multiple regression model is only 20.5% successful in predicting the depenedent **points** variable. Ths value might increase or decrease with the addition of new parameters. To avoid case of model overfitting one must look into the **Adjusted R-squared** as it penalizes for the number of independent variables used to explain the data. In both the case it is always better to have a larger R-squared value, as the model will be more likely to predict the outcomes successfully.
+
+###Diagnostic Plots:
+```{r}
+par(mfrow = c(2,2))
+plot(my_model2, which = c(1,2,5))
+```
+
+#### Model Assumptions:  
+1. In linear models it is assumed that the target variable can be explained by a linear combination of independent variables.  
+2. Its is assumed that the errors are nomrally distributed with mean zero and constant variance (i.e the size of the error does not depend on the number of explaining parameters).
+  + Based on the Normal QQ plot the residuals are close to the line hence shows a better fit to our normality assumption.
+  + Based on the Residual vs Fitted plot the residuals are randomly spread and there is no revelant relationship between the residuals and the fitted values.  
+3. Based on the Residuals vs Levergae it can be acertained that the errors are not correlated and there are no outliers in the analysis dataset.  
+
+
+
+
+
+

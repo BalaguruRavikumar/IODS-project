@@ -3,3 +3,5 @@
 
 The **Introduction to Open Data Science** is an excellent initative for graduate students like myself to explore the base aspects of reporducible research. The course through various workshop excercises faciliaties *hands-on* data anaylsis frameworks to explore and review. Further the peer-review process accompanied with every excercise would aid in understanding the excercise in a grave manner. My excercises and codes will be available for my peers from my [Git repository](https://github.com/BalaguruRavikumar/IODS-project.git).
 
+## **Tools and Methods for open and reproducible research**  
+Git repository and the course dairy pages were prepared and updated as per the requirments. The Datacamp excerise **"_R Short and Sweet_"** was completed [link](https://www.datacamp.com/statement-of-accomplishment/course/0baf9ad88eb1f86a2c08ebd1ed2ef24d0a7ef2f9) prior to the final commit.  
