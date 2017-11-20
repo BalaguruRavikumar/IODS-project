@@ -1,0 +1,135 @@
+# **Logistic regression**
+
+##Summary
+* Prior to starting the **"_RStudio Exercise 3_"** I have completed the DataCamp excerise **"Logistic regression"**, wherein functionalities such as handling data (combining, mutating, selecting, filtering) were well understood. Apart from exploring, fitting and predicting using logistic regression models, I have also familiarized with apporaches to model validation.
+* The analysis dataset for the **"_RStudio Exercise 3_"** was generated following the **Data Wrangling** protocol where in a dataframe *alc* data was processed such that it contains 382 rows and 35 variables. 
+
+##Procedure for Exercise 3
+###Libraries:
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(boot)
+```
+
+###Reading the data:
+```{r}
+alc <- read.table('data/alc_data.txt', header=TRUE)
+glimpse(alc)
+colnames(alc)
+```
+
+####Exploring the data:
+* The data is obtained from a series of questionaries from two Portuguese Schools with 382 students with 33 varibales (2 variables are added later).  
+* The preformace of students in two subjects Maths and Portuguese are provided.
+* The dataset contains attributes such as **age, sex, family size, internet, romantic, paid and other binary variable** shown through the *glimpse* function, the continous varibles are **grades secured by the students in three different periods along with alcohol consumptions workday/weekday**.   
+* The alcohol consumptions were further categorized as **high/low consumptions** such that the avergae alcohol consumptions workday/weekday is **greater than 2**.
+
+####Data Analysis:
+```{r}
+my_var <- c("famsize" , "romantic", "freetime","goout")
+my_model <- glm(high_use ~ famsize + romantic + freetime + goout, data = alc, family = "binomial")
+```
+
+#####Variable hypothesis:
+* Family size (**famsize**) I hypothesize that students in a bigger family size will be prone to drink more.    
+* The romantic relationship (**romantic**) status yes/no, of the students might have an influence on the degree of alcohol consumptions, as I hypothesize that student would are in a romantic relationship would be porne to drink more.  
+* Free-time (**freetime**) varibale would have an underlying effcet on alcohol consumptions, as I hypothesize that students with more freetime would be prone to high level of alcohol consumption.  
+* Going-out (**goout**) varaible determines the friends cricle of students and I hypothesize that students how go-out more would be prone to high level of alcohol consumption. 
+
+####Numerical and Graphical exploration the data:
+```{r}
+alc_data <- select(alc, one_of(c(my_var,"high_use")))
+summary(alc_data)
+ggplot(alc_data, aes(x = high_use, y = goout, col = famsize)) +geom_boxplot() + ggtitle("High alcohol consumptions vs Goinging-out time and family-size")
+ggplot(alc_data, aes(x = high_use, y = freetime, col = romantic)) + geom_boxplot() + ggtitle("High alcohol consumptions vs Free time and romantic")
+```
+
+####Comments on my hypothesis:  
+* The explanatory variable going-out (**goout**) with friends, was higher in cases of high alc use whereas the family-size (**famsize**) had no effect of the high alc use.  
+* Similary the varibale free-time (**freetime**) by iteslf had no effect on the high alc use, but students in a romantic relationship (**romantic**) had higher free time and were porne to high alc use.  
+
+####Logistic regression:
+```{r}
+log_model <- glm(high_use ~ famsize + romantic + freetime + goout, data = alc_data, family = "binomial")
+summary(log_model)
+OR <- coef(log_model) %>% exp
+CI <- confint(log_model) %>% exp
+cbind(OR,CI)
+```
+
+####Interpret the results:
+* From the summary of the model the explanatory variables that was evident in explaining the high alcohol consumption was the **goout** variables which along with the intercept had a higher lievel of significance shown through the P-values.  
+* Based on my hypothesis all the other variables expect **goout** failed to explain the high alc use.
+* Based on the exponents of the coefficients values of the models i.e, **Odds Ratio** It was possible to ascertain that variables **(famsize (less than 3), freetime and goout)** having OR's > 1 are positively asscoiated to successfuly association with high alc use, whereas **romantic** relationship presence was not sufficient to explain the high alc use.
+* The variables **(famsize and romantic)** are factor variables shown through the str(alc_data) command. For these variables the coef values are intrepretted as their difference from the intercept.
+* Through the CI caluctaion it can be found that the OR's at 95% confidence (2.5% left tail and 97.5% right tail), we can be say the such OR values of the our explanatory variables in the model has 95% probability to fall between the ranges given in the columns **(2.5 & 97.5)**
+
+####Model predictions:
+```{r}
+log_model2 <- glm(high_use ~ goout, data = alc_data, family = "binomial")
+probabilities <- predict(log_model2, type = "response")
+alc_data <- mutate(alc_data, probability = probabilities)
+alc_data <- mutate(alc_data, prediction = probability > 0.5)
+table(high_use = alc_data$high_use, prediction = alc_data$prediction)
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+loss_func(class = alc_data$high_use, prob = alc_data$probability)
+
+log_model3 <- glm(high_use ~ freetime, data = alc_data, family = "binomial")
+probabilities <- predict(log_model3, type = "response")
+alc_data <- mutate(alc_data, probability = probabilities)
+alc_data <- mutate(alc_data, prediction = probability > 0.5)
+table(high_use = alc_data$high_use, prediction = alc_data$prediction)
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+loss_func(class = alc_data$high_use, prob = alc_data$probability)
+```
+
+####Comments:
+* The variable **goout** beinging significant (high P-value) with a higher OR values was seleted to developed the logistic model.  
+* The probabilities were predicted for the alc high_use in the training data to check the predictions of the model.  
+* The prediction probailities were later caterogized as positives (success) and negatives (failures) at a threshold of 0.5.  
+* A confusion matrix was generated using the True classifier (high alc use) and Predcitions (0/1 based on probabilities).  
+* The accuracy of the model was estimated through the mean of incorrectly classified observations as a penalty (loss) function for the classifier.
+* This mean of the total incorrect predcitions in the model was found to be 0.26.  
+* When compared to a variable selected at random **freetime** - log_model3 the penalty was found to 0.29 which is higher than logmodel2.
+
+####Cross-validation (Bonus):
+```{r}
+cv <- cv.glm(data = alc_data, cost = loss_func, glmfit = log_model2, K = 10)
+cv$delta[1]
+```
+
+####Comments:
+* The model after 10 fold Cross-validation has a similar penalty as log_model2 and their loss penalities were 0.26.  
+* Yes, using the **goout** variable, I was able to find a similar model.
+
+####Cross-validation (Different logistic models-Super bonus):
+```{r}
+get_log_model <- function(mydata){
+  mymod <- glm(high_use ~ ., data = mydata, family = "binomial")
+  cv <- cv.glm(data = mydata, cost = loss_func, glmfit = mymod, K = 10)
+  return(cv$delta[1])
+}
+
+cv_values <- c()
+cnames <- c("famrel", "internet", "age", "paid", "school", "Pstatus", "famsup", "romantic", "absences", "address")
+predictors <- cnames
+for( i in length(predictors):1){
+    tempdata <- select(alc, one_of(c(predictors[i:length(predictors)],"high_use")))
+    cv_values[i] <- get_log_model(tempdata)
+}
+
+results <- as.data.frame(cbind(Number_predictors = 10:1, Penality = cv_values))
+ggplot(results, aes(x = Number_predictors, y = Penality))+geom_line()
+```
+
+####Comments:
+* As the number of predictors in the model were decreased (10 to 1) the penality of the model were found to be increasing.
+* An inverse relationship was found between the number of predictors and the error after 10 fold cross-validation.
