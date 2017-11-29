@@ -1,0 +1,153 @@
+# **Clustering and Classification**
+
+##Analysis Dataset:
+* The boston data set contains 506 rows and 14 columns. The dataset contains various statistics about the boston area, which includes various factors like crime rate, business areas, popoulation, age and other similar variables.  
+* Most of the varaibles in the dataset are continoius values with few categorical variables.     
+* The summary of the various varibales are given below.
+
+##Procedure for Exercise 4
+###Libraries:
+```{r}
+library(MASS)
+library(corrplot)
+library(GGally)
+library(ggplot2)
+
+```
+
+###Loading the data:
+```{r}
+dim(Boston)
+str(Boston)
+```
+
+####Summary and graphical overview of the data:
+```{r}
+summary(Boston)
+corrplot(cor(Boston), method = "circle", type="upper", diag=FALSE)
+```
+
+* The variables **rad** (accessibility to radial highways) and **tax** (full-value property tax), where found to have the highes correlation.
+* These varaibels were also found to have the stronges correlation with the **crim** (crime rate) in Boston area.
+* Not all the variables are normally distributed.(analysis using ggpairs- GGally).
+
+#####Standardize the Dataset and create categorical varaible:
+```{r}
+bscaled <- as.data.frame(scale(Boston))
+summary(bscaled)
+bins <- quantile(bscaled$crim)
+crime <- cut(bscaled$crim, breaks = bins, include.lowest = TRUE, label = c("low", "med_low", "med_high", "high"))
+bscaled <- dplyr::select(bscaled, -crim)
+bscaled <- data.frame(bscaled, crime)
+```
+
+* The Boston dataset was scaled such that each columns had a mean value of 0 and standard dev of 1, as shown in the summary.   
+* The crime variable in the dataset was categorized into different classes and labelled as **low, med-low, med-high, high**, based on their quantiles.
+* The crime variable was later replaced in the existing dataset for further analysis. 
+
+####Train and Test data:
+```{r}
+set.seed(123)
+ind <- sample(nrow(bscaled),  size = nrow(bscaled) * 0.8)
+train <- bscaled[ind,]
+test <- bscaled[-ind,]
+true_class <- test$crime
+test <- dplyr::select(test, -crime)
+```
+* The training dataset for the analysis were selected by random sampling **80%** the rows of the scaled boston dataset.   
+* The remaining **20%** were designated as test and their true classes of crime rate was saved as seperate variable.
+* The crime variable was later removed from the test data for prediction purposes.
+
+####Linear Discriminant Analysis:
+```{r}
+lda.fit <- lda(crime ~ ., data = train)
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+lda.fit
+classes <- as.numeric(train$crime)
+plot(lda.fit, dimen = 2, col =classes, pch =classes)
+lda.arrows(lda.fit, myscale = 2)
+```
+
+* The LDA model was fit with crime as the target variable and all the other variables as predictors.  
+* Since there were four classes through the summary of the LDA model we find **3** linear discriminants.
+* Based on the co-efficients of the variables (size of the arrows in the bi-plot) we find the **rad, zinc and nox** are the contributors for highest variance.  
+* Further **LD1** explains 95% of variance in the predictor varaibles.
+
+####Prediction on test set:
+```{r}
+lda.pred <- predict(lda.fit, newdata = test)
+table(correct = true_class, predicted = lda.pred$class)
+```
+* The LDA model was used to predict the class of in the test dataset.
+* Based on the tabulated predictions we find that the LDA model classfiy's the various classes correctly **70%** of time.
+* It is important to note that the train set was random sampled, hence when using a different seed setting this number might change, hence its is advisable to do a cross-validation of the model prior to prediction.
+
+####Distance and K-means:
+```{r}
+data(Boston)
+boston_scaled <- scale(Boston)
+euc_dist <- dist(boston_scaled)
+summary(euc_dist)
+km <-kmeans(boston_scaled, centers = 3)
+```
+* The boston dataset was reloaded and scaled.
+* The distance between various varaibles were enumerated through euclidean distance measure.
+* Since assuming the output classes are not known **kmeans** clsuerting was preformed with 3 classes.
+
+####Optimal number of K-means cluster:
+```{r}
+set.seed(123)
+k_max <- 5
+twcss <- sapply(1:k_max, function(k){kmeans(boston_scaled, k)$tot.withinss})
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+```
+
+* From the plot it was found the was signiifcant drop in the total within cluster sum of squares **twcss** value after two clusters.  
+* Hence the **kmeans clustering** was preformed again with two clusters.  
+
+```{r}
+kmnew <-kmeans(boston_scaled, centers = 2)
+pairs(boston_scaled, col = kmnew$cluster)
+my_var <- c("nox","zn","rad","crim")
+pairs(boston_scaled[,my_var], col = kmnew$cluster)
+```
+
+* The kmeans clusters were visulaized using a set of selected varaibles **nox,zn,rad,crim**, as they had the highest co-efficents in the LDA anaysis.  
+* The 2 clusters colour coded in the plot shows a distinct classificiation in the crime rate in the Boston population.    
+
+####Bonus: Clsutering and LDA:
+```{r}
+data(Boston)
+boston_scaled <- scale(Boston)
+boston_scaled <- as.data.frame(boston_scaled)
+
+km <-kmeans(boston_scaled, centers = 6)
+cluster <- km$cluster
+boston_scaled <- data.frame(boston_scaled,cluster)
+
+set.seed(345)
+ind <- sample(nrow(boston_scaled),  size = nrow(boston_scaled) * 0.8)
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+t_class <- test$cluster
+test <- dplyr::select(test, -cluster)
+
+lfit <- lda(cluster~., data = train)
+classes <- as.numeric(train$cluster)
+plot(lfit, dimen = 2, col =classes, pch =classes)
+lda.arrows(lfit, myscale = 2)
+
+lda.pred2 <- predict(lfit, newdata = test)
+table(correct = t_class, predicted = lda.pred2$class)
+
+```
+
+* The most influencial varaibles are **rad and indus**.  
+* From the tabulation of the prediction on the test data and their tru classes it was found that the model **lfit** works better in discrimanting the cluter varaibles with **98%** accuracy.  
